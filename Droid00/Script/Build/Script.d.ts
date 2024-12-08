@@ -13,7 +13,6 @@ declare namespace Script {
         static readonly directions: Map<DIRECTION, number[]>;
         speedWheel: number;
         timeToMove: number;
-        direction: DIRECTION;
         constructor();
         move(_direction: DIRECTION): Promise<void>;
         hndEvent: (_event: CustomEvent) => void;

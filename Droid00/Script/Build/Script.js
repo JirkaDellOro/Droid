@@ -17,13 +17,14 @@ var Script;
         static { this.directions = new Map([
             [DIRECTION.FORWARD, [1, 1]], [DIRECTION.BACK, [-1, -1]], [DIRECTION.LEFT, [1, -1]], [DIRECTION.RIGHT, [-1, 1]], [DIRECTION.STOP, [0, 0]],
         ]); }
+        #direction;
         #left;
         #right;
         constructor() {
             super();
             this.speedWheel = 360; // angle to turn wheels in one second
             this.timeToMove = 1; // Seconds to perform a move to the next tile or a 90 degree turn
-            this.direction = DIRECTION.STOP;
+            this.#direction = DIRECTION.STOP;
             this.#left = [];
             this.#right = [];
             // Activate the functions of this component as response to events
@@ -36,23 +37,24 @@ var Script;
                         this.removeEventListener("componentRemove" /* ƒ.EVENT.COMPONENT_REMOVE */, this.hndEvent);
                         this.removeEventListener("nodeDeserialized" /* ƒ.EVENT.NODE_DESERIALIZED */, this.hndEvent);
                         this.node.removeEventListener("renderPrepare" /* ƒ.EVENT.RENDER_PREPARE */, this.hndEvent);
-                        this.node.removeEventListener(Script.EVENT.REGISTER_MODULE, this.hndEvent);
+                        this.node.removeEventListener(Script.EVENT.REGISTER_MODULE, this.hndEvent, true);
                         break;
                     case "nodeDeserialized" /* ƒ.EVENT.NODE_DESERIALIZED */:
-                        // this.node.addEventListener(ƒ.EVENT.GRAPH_INSTANTIATED, this.hndEvent);
-                        this.node.dispatchEvent(new CustomEvent("registerModule", { bubbles: true, detail: this }));
                         // if deserialized the node is now fully reconstructed and access to all its components and children is possible
+                        this.node.addEventListener(Script.EVENT.REGISTER_MODULE, this.hndEvent, true);
+                        this.node.dispatchEvent(new CustomEvent(Script.EVENT.REGISTER_MODULE, { bubbles: true, detail: this }));
                         this.#left = this.node.getChildren().filter((_node) => _node.name.startsWith("WheelL"));
                         this.#right = this.node.getChildren().filter((_node) => _node.name.startsWith("WheelR"));
                         break;
                     case "renderPrepare" /* ƒ.EVENT.RENDER_PREPARE */:
                         let timeElapsed = ƒ.Loop.timeFrameGame / 1000;
-                        const left = timeElapsed * this.speedWheel * Chassis.directions.get(this.direction)[0];
-                        const right = timeElapsed * this.speedWheel * Chassis.directions.get(this.direction)[1];
+                        const left = timeElapsed * this.speedWheel * Chassis.directions.get(this.#direction)[0];
+                        const right = timeElapsed * this.speedWheel * Chassis.directions.get(this.#direction)[1];
                         this.#left.forEach(_wheel => _wheel.mtxLocal.rotateX(left));
                         this.#right.forEach(_wheel => _wheel.mtxLocal.rotateX(right));
                         break;
                     case Script.EVENT.REGISTER_MODULE:
+                        this.node.addEventListener("renderPrepare" /* ƒ.EVENT.RENDER_PREPARE */, this.hndEvent);
                         _event.detail.dispatchEvent(new CustomEvent(Script.EVENT.REGISTER_MODULE, { detail: this }));
                         break;
                 }
@@ -60,13 +62,14 @@ var Script;
             // Don't start when running in editor
             if (ƒ.Project.mode == ƒ.MODE.EDITOR)
                 return;
+            this.#direction = DIRECTION.STOP;
             // Listen to this component being added to or removed from a node
             this.addEventListener("componentAdd" /* ƒ.EVENT.COMPONENT_ADD */, this.hndEvent);
             this.addEventListener("componentRemove" /* ƒ.EVENT.COMPONENT_REMOVE */, this.hndEvent);
             this.addEventListener("nodeDeserialized" /* ƒ.EVENT.NODE_DESERIALIZED */, this.hndEvent);
         }
         async move(_direction) {
-            this.direction = _direction;
+            this.#direction = _direction;
             const translation = _direction == DIRECTION.FORWARD ? 1 : _direction == DIRECTION.BACK ? -1 : 0;
             const rotation = 90 * (_direction == DIRECTION.LEFT ? 1 : _direction == DIRECTION.RIGHT ? -1 : 0);
             let promise = new Promise((_resolve) => {
@@ -110,7 +113,6 @@ var Script;
                     case "componentAdd" /* ƒ.EVENT.COMPONENT_ADD */:
                         this.node.addEventListener(EVENT.MOVE, this.hndEvent);
                         this.node.addEventListener(EVENT.CONSOLIDATE, this.hndEvent);
-                        this.node.addEventListener(EVENT.REGISTER_MODULE, this.hndEvent);
                         break;
                     case "componentRemove" /* ƒ.EVENT.COMPONENT_REMOVE */:
                         this.removeEventListener("componentAdd" /* ƒ.EVENT.COMPONENT_ADD */, this.hndEvent);
@@ -139,6 +141,7 @@ var Script;
             this.addEventListener("componentAdd" /* ƒ.EVENT.COMPONENT_ADD */, this.hndEvent);
             this.addEventListener("componentRemove" /* ƒ.EVENT.COMPONENT_REMOVE */, this.hndEvent);
             this.addEventListener("nodeDeserialized" /* ƒ.EVENT.NODE_DESERIALIZED */, this.hndEvent);
+            this.addEventListener(EVENT.REGISTER_MODULE, this.hndEvent);
         }
     }
     Script.Droid = Droid;

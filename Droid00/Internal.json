@@ -482,8 +482,7 @@
             "Script.Chassis": {
               "active": true,
               "speedWheel": 180,
-              "timeToMove": 1,
-              "direction": 0
+              "timeToMove": 1
             }
           }
         ]

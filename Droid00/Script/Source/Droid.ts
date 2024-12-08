@@ -21,6 +21,7 @@ namespace Script {
       this.addEventListener(ƒ.EVENT.COMPONENT_ADD, this.hndEvent);
       this.addEventListener(ƒ.EVENT.COMPONENT_REMOVE, this.hndEvent);
       this.addEventListener(ƒ.EVENT.NODE_DESERIALIZED, this.hndEvent);
+      this.addEventListener(EVENT.REGISTER_MODULE, this.hndEvent)
     }
 
     // Activate the functions of this component as response to events
@@ -29,7 +30,6 @@ namespace Script {
         case ƒ.EVENT.COMPONENT_ADD:
           this.node.addEventListener(EVENT.MOVE, this.hndEvent)
           this.node.addEventListener(EVENT.CONSOLIDATE, this.hndEvent)
-          this.node.addEventListener(EVENT.REGISTER_MODULE, this.hndEvent)
           break;
         case ƒ.EVENT.COMPONENT_REMOVE:
           this.removeEventListener(ƒ.EVENT.COMPONENT_ADD, this.hndEvent);

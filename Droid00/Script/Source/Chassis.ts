@@ -14,7 +14,7 @@ namespace Script {
     ])
     public speedWheel: number = 360 // angle to turn wheels in one second
     public timeToMove: number = 1 // Seconds to perform a move to the next tile or a 90 degree turn
-    public direction: DIRECTION = DIRECTION.STOP
+    #direction: DIRECTION = DIRECTION.STOP
     #left: ƒ.Node[] = []
     #right: ƒ.Node[] = []
 
@@ -25,6 +25,7 @@ namespace Script {
       if (ƒ.Project.mode == ƒ.MODE.EDITOR)
         return;
 
+      this.#direction = DIRECTION.STOP
       // Listen to this component being added to or removed from a node
       this.addEventListener(ƒ.EVENT.COMPONENT_ADD, this.hndEvent);
       this.addEventListener(ƒ.EVENT.COMPONENT_REMOVE, this.hndEvent);
@@ -32,7 +33,7 @@ namespace Script {
     }
 
     public async move(_direction: DIRECTION): Promise<void> {
-      this.direction = _direction
+      this.#direction = _direction
       const translation: number = _direction == DIRECTION.FORWARD ? 1 : _direction == DIRECTION.BACK ? -1 : 0
       const rotation: number = 90 * (_direction == DIRECTION.LEFT ? 1 : _direction == DIRECTION.RIGHT ? -1 : 0)
 
@@ -67,23 +68,24 @@ namespace Script {
           this.removeEventListener(ƒ.EVENT.COMPONENT_REMOVE, this.hndEvent);
           this.removeEventListener(ƒ.EVENT.NODE_DESERIALIZED, this.hndEvent);
           this.node.removeEventListener(ƒ.EVENT.RENDER_PREPARE, this.hndEvent);
-          this.node.removeEventListener(EVENT.REGISTER_MODULE, this.hndEvent);
+          this.node.removeEventListener(EVENT.REGISTER_MODULE, this.hndEvent, true);
           break;
         case ƒ.EVENT.NODE_DESERIALIZED:
-          // this.node.addEventListener(ƒ.EVENT.GRAPH_INSTANTIATED, this.hndEvent);
-          this.node.dispatchEvent(new CustomEvent("registerModule", { bubbles: true, detail: this }))
           // if deserialized the node is now fully reconstructed and access to all its components and children is possible
+          this.node.addEventListener(EVENT.REGISTER_MODULE, this.hndEvent, true);
+          this.node.dispatchEvent(new CustomEvent(EVENT.REGISTER_MODULE, { bubbles: true, detail: this }))
           this.#left = this.node.getChildren().filter((_node: ƒ.Node) => _node.name.startsWith("WheelL"));
           this.#right = this.node.getChildren().filter((_node: ƒ.Node) => _node.name.startsWith("WheelR"));
           break;
         case ƒ.EVENT.RENDER_PREPARE:
           let timeElapsed: number = ƒ.Loop.timeFrameGame / 1000
-          const left: number = timeElapsed * this.speedWheel * Chassis.directions.get(this.direction)[0]
-          const right: number = timeElapsed * this.speedWheel * Chassis.directions.get(this.direction)[1]
+          const left: number = timeElapsed * this.speedWheel * Chassis.directions.get(this.#direction)[0]
+          const right: number = timeElapsed * this.speedWheel * Chassis.directions.get(this.#direction)[1]
           this.#left.forEach(_wheel => _wheel.mtxLocal.rotateX(left))
           this.#right.forEach(_wheel => _wheel.mtxLocal.rotateX(right))
           break;
         case EVENT.REGISTER_MODULE:
+          this.node.addEventListener(ƒ.EVENT.RENDER_PREPARE, this.hndEvent);
           _event.detail.dispatchEvent(new CustomEvent(EVENT.REGISTER_MODULE, { detail: this }))
           break
       }
