@@ -369,7 +369,29 @@
           "ƒ.Node": {
             "name": "Droid",
             "active": true,
-            "components": {},
+            "components": {
+              "Droid": [
+                {
+                  "Script.Droid": {
+                    "active": true
+                  }
+                }
+              ],
+              "ComponentTransform": [
+                {
+                  "ƒ.ComponentTransform": {
+                    "local": {
+                      "translation": "[0, 0, 0]",
+                      "rotation": "[0, 0, 0]",
+                      "scaling": "[1, 1, 1]"
+                    },
+                    "Component": {
+                      "active": true
+                    }
+                  }
+                }
+              ]
+            },
             "children": [
               {
                 "ƒ.GraphInstance": {

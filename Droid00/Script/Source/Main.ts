@@ -7,12 +7,12 @@ namespace Script {
 
   async function start(_event: CustomEvent): Promise<void> {
     viewport = _event.detail;
+
     let cmpCamera: ƒ.ComponentCamera = new ƒ.ComponentCamera();
     cmpCamera.mtxPivot.translateZ(-5)
     cmpCamera.mtxPivot.translateY(5)
     cmpCamera.mtxPivot.lookAt(ƒ.Vector3.ZERO())
-    viewport.camera = cmpCamera
-    
+    viewport.camera = cmpCamera    
 
     let droid: ƒ.Node = viewport.getBranch().getChildrenByName("Droid")[0]
     let chassis: Chassis = droid.getChildrenByName("Chassis")[0].getComponent(Chassis)

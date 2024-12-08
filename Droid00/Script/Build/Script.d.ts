@@ -20,4 +20,12 @@ declare namespace Script {
     }
 }
 declare namespace Script {
+    import ƒ = FudgeCore;
+    class Droid extends ƒ.ComponentScript {
+        static readonly iSubclass: number;
+        constructor();
+        hndEvent: (_event: CustomEvent) => void;
+    }
+}
+declare namespace Script {
 }

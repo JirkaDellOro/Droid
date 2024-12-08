@@ -87,6 +87,49 @@ var Script;
 var Script;
 (function (Script) {
     var ƒ = FudgeCore;
+    ƒ.Project.registerScriptNamespace(Script); // Register the namespace to FUDGE for serialization
+    class Droid extends ƒ.ComponentScript {
+        // Register the script as component for use in the editor via drag&drop
+        static { this.iSubclass = ƒ.Component.registerSubclass(Droid); }
+        constructor() {
+            super();
+            // Activate the functions of this component as response to events
+            this.hndEvent = (_event) => {
+                switch (_event.type) {
+                    case "componentAdd" /* ƒ.EVENT.COMPONENT_ADD */:
+                        this.node.addEventListener("move", this.hndEvent);
+                        this.node.addEventListener("consolidate", this.hndEvent);
+                        break;
+                    case "componentRemove" /* ƒ.EVENT.COMPONENT_REMOVE */:
+                        this.removeEventListener("componentAdd" /* ƒ.EVENT.COMPONENT_ADD */, this.hndEvent);
+                        this.removeEventListener("componentRemove" /* ƒ.EVENT.COMPONENT_REMOVE */, this.hndEvent);
+                        this.removeEventListener("nodeDeserialized" /* ƒ.EVENT.NODE_DESERIALIZED */, this.hndEvent);
+                        this.node.removeEventListener("move", this.hndEvent);
+                        this.node.removeEventListener("consolidate", this.hndEvent);
+                        break;
+                    case "nodeDeserialized" /* ƒ.EVENT.NODE_DESERIALIZED */:
+                        // if deserialized the node is now fully reconstructed and access to all its components and children is possible
+                        break;
+                    case "move":
+                        this.node.mtxLocal.translateZ(_event.detail.translation);
+                        this.node.mtxLocal.rotateY(_event.detail.rotation);
+                        break;
+                }
+            };
+            // Don't start when running in editor
+            if (ƒ.Project.mode == ƒ.MODE.EDITOR)
+                return;
+            // Listen to this component being added to or removed from a node
+            this.addEventListener("componentAdd" /* ƒ.EVENT.COMPONENT_ADD */, this.hndEvent);
+            this.addEventListener("componentRemove" /* ƒ.EVENT.COMPONENT_REMOVE */, this.hndEvent);
+            this.addEventListener("nodeDeserialized" /* ƒ.EVENT.NODE_DESERIALIZED */, this.hndEvent);
+        }
+    }
+    Script.Droid = Droid;
+})(Script || (Script = {}));
+var Script;
+(function (Script) {
+    var ƒ = FudgeCore;
     ƒ.Debug.info("Main Program Template running!");
     let viewport;
     document.addEventListener("interactiveViewportStarted", start);
