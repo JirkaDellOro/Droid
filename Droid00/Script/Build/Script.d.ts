@@ -16,11 +16,16 @@ declare namespace Script {
         direction: DIRECTION;
         constructor();
         move(_direction: DIRECTION): Promise<void>;
-        hndEvent: (_event: Event) => void;
+        hndEvent: (_event: CustomEvent) => void;
     }
 }
 declare namespace Script {
     import ƒ = FudgeCore;
+    enum EVENT {
+        MOVE = "move",
+        CONSOLIDATE = "consolidate",
+        REGISTER_MODULE = "registerModule"
+    }
     class Droid extends ƒ.ComponentScript {
         static readonly iSubclass: number;
         constructor();

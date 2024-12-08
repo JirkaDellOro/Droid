@@ -58,7 +58,7 @@ namespace Script {
     }
 
     // Activate the functions of this component as response to events
-    public hndEvent = (_event: Event): void => {
+    public hndEvent = (_event: CustomEvent): void => {
       switch (_event.type) {
         case ƒ.EVENT.COMPONENT_ADD:
           break;
@@ -67,22 +67,25 @@ namespace Script {
           this.removeEventListener(ƒ.EVENT.COMPONENT_REMOVE, this.hndEvent);
           this.removeEventListener(ƒ.EVENT.NODE_DESERIALIZED, this.hndEvent);
           this.node.removeEventListener(ƒ.EVENT.RENDER_PREPARE, this.hndEvent);
+          this.node.removeEventListener(EVENT.REGISTER_MODULE, this.hndEvent);
           break;
         case ƒ.EVENT.NODE_DESERIALIZED:
+          // this.node.addEventListener(ƒ.EVENT.GRAPH_INSTANTIATED, this.hndEvent);
+          this.node.dispatchEvent(new CustomEvent("registerModule", { bubbles: true, detail: this }))
           // if deserialized the node is now fully reconstructed and access to all its components and children is possible
-          this.node.addEventListener(ƒ.EVENT.RENDER_PREPARE, this.hndEvent);
           this.#left = this.node.getChildren().filter((_node: ƒ.Node) => _node.name.startsWith("WheelL"));
           this.#right = this.node.getChildren().filter((_node: ƒ.Node) => _node.name.startsWith("WheelR"));
           break;
         case ƒ.EVENT.RENDER_PREPARE:
-          if (!this.direction)
-            return
           let timeElapsed: number = ƒ.Loop.timeFrameGame / 1000
           const left: number = timeElapsed * this.speedWheel * Chassis.directions.get(this.direction)[0]
           const right: number = timeElapsed * this.speedWheel * Chassis.directions.get(this.direction)[1]
           this.#left.forEach(_wheel => _wheel.mtxLocal.rotateX(left))
           this.#right.forEach(_wheel => _wheel.mtxLocal.rotateX(right))
           break;
+        case EVENT.REGISTER_MODULE:
+          _event.detail.dispatchEvent(new CustomEvent(EVENT.REGISTER_MODULE, { detail: this }))
+          break
       }
     }
 

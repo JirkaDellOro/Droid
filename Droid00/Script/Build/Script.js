@@ -36,21 +36,24 @@ var Script;
                         this.removeEventListener("componentRemove" /* ƒ.EVENT.COMPONENT_REMOVE */, this.hndEvent);
                         this.removeEventListener("nodeDeserialized" /* ƒ.EVENT.NODE_DESERIALIZED */, this.hndEvent);
                         this.node.removeEventListener("renderPrepare" /* ƒ.EVENT.RENDER_PREPARE */, this.hndEvent);
+                        this.node.removeEventListener(Script.EVENT.REGISTER_MODULE, this.hndEvent);
                         break;
                     case "nodeDeserialized" /* ƒ.EVENT.NODE_DESERIALIZED */:
+                        // this.node.addEventListener(ƒ.EVENT.GRAPH_INSTANTIATED, this.hndEvent);
+                        this.node.dispatchEvent(new CustomEvent("registerModule", { bubbles: true, detail: this }));
                         // if deserialized the node is now fully reconstructed and access to all its components and children is possible
-                        this.node.addEventListener("renderPrepare" /* ƒ.EVENT.RENDER_PREPARE */, this.hndEvent);
                         this.#left = this.node.getChildren().filter((_node) => _node.name.startsWith("WheelL"));
                         this.#right = this.node.getChildren().filter((_node) => _node.name.startsWith("WheelR"));
                         break;
                     case "renderPrepare" /* ƒ.EVENT.RENDER_PREPARE */:
-                        if (!this.direction)
-                            return;
                         let timeElapsed = ƒ.Loop.timeFrameGame / 1000;
                         const left = timeElapsed * this.speedWheel * Chassis.directions.get(this.direction)[0];
                         const right = timeElapsed * this.speedWheel * Chassis.directions.get(this.direction)[1];
                         this.#left.forEach(_wheel => _wheel.mtxLocal.rotateX(left));
                         this.#right.forEach(_wheel => _wheel.mtxLocal.rotateX(right));
+                        break;
+                    case Script.EVENT.REGISTER_MODULE:
+                        _event.detail.dispatchEvent(new CustomEvent(Script.EVENT.REGISTER_MODULE, { detail: this }));
                         break;
                 }
             };
@@ -90,6 +93,12 @@ var Script;
 (function (Script) {
     var ƒ = FudgeCore;
     ƒ.Project.registerScriptNamespace(Script); // Register the namespace to FUDGE for serialization
+    let EVENT;
+    (function (EVENT) {
+        EVENT["MOVE"] = "move";
+        EVENT["CONSOLIDATE"] = "consolidate";
+        EVENT["REGISTER_MODULE"] = "registerModule";
+    })(EVENT = Script.EVENT || (Script.EVENT = {}));
     class Droid extends ƒ.ComponentScript {
         // Register the script as component for use in the editor via drag&drop
         static { this.iSubclass = ƒ.Component.registerSubclass(Droid); }
@@ -99,22 +108,27 @@ var Script;
             this.hndEvent = (_event) => {
                 switch (_event.type) {
                     case "componentAdd" /* ƒ.EVENT.COMPONENT_ADD */:
-                        this.node.addEventListener("move", this.hndEvent);
-                        this.node.addEventListener("consolidate", this.hndEvent);
+                        this.node.addEventListener(EVENT.MOVE, this.hndEvent);
+                        this.node.addEventListener(EVENT.CONSOLIDATE, this.hndEvent);
+                        this.node.addEventListener(EVENT.REGISTER_MODULE, this.hndEvent);
                         break;
                     case "componentRemove" /* ƒ.EVENT.COMPONENT_REMOVE */:
                         this.removeEventListener("componentAdd" /* ƒ.EVENT.COMPONENT_ADD */, this.hndEvent);
                         this.removeEventListener("componentRemove" /* ƒ.EVENT.COMPONENT_REMOVE */, this.hndEvent);
                         this.removeEventListener("nodeDeserialized" /* ƒ.EVENT.NODE_DESERIALIZED */, this.hndEvent);
-                        this.node.removeEventListener("move", this.hndEvent);
-                        this.node.removeEventListener("consolidate", this.hndEvent);
+                        this.node.removeEventListener(EVENT.MOVE, this.hndEvent);
+                        this.node.removeEventListener(EVENT.CONSOLIDATE, this.hndEvent);
                         break;
                     case "nodeDeserialized" /* ƒ.EVENT.NODE_DESERIALIZED */:
                         // if deserialized the node is now fully reconstructed and access to all its components and children is possible
+                        this.node.broadcastEvent(new CustomEvent(EVENT.REGISTER_MODULE, { detail: this }));
                         break;
-                    case "move":
+                    case EVENT.MOVE:
                         this.node.mtxLocal.translateZ(_event.detail.translation);
                         this.node.mtxLocal.rotateY(_event.detail.rotation);
+                        break;
+                    case EVENT.REGISTER_MODULE:
+                        console.log(_event.detail);
                         break;
                 }
             };
@@ -134,7 +148,17 @@ var Script;
     var ƒ = FudgeCore;
     let viewport;
     document.addEventListener("interactiveViewportStarted", start);
+    let getCommand = getCommandInternal;
+    async function getAgents() {
+        // let url: string = "../../../Agent.js"
+        let url = "https://jirkadelloro.github.io/Agent/Agent.js";
+        //@ts-ignore
+        let Agent = (await import(url)).default;
+        await Agent.createDialog(1, ["getCommand"]);
+        getCommand = Agent.get(0).getCommand;
+    }
     async function start(_event) {
+        // await getAgents();
         viewport = _event.detail;
         let cmpCamera = new ƒ.ComponentCamera();
         cmpCamera.mtxPivot.translateZ(-5);
@@ -153,8 +177,9 @@ var Script;
         ƒ.Loop.addEventListener("loopFrame" /* ƒ.EVENT.LOOP_FRAME */, update);
         ƒ.Loop.start(); // start the game loop to continously draw the viewport, update the audiosystem and drive the physics i/a
     }
-    function getCommand(_state) {
-        let command = { module: "Chassis", method: "move", data: "forward" };
+    function getCommandInternal(_state) {
+        let data = Script.DIRECTION[ƒ.Random.default.getPropertyName(Script.DIRECTION)];
+        let command = { module: "Chassis", method: "move", data: data };
         return command;
     }
     function update(_event) {
