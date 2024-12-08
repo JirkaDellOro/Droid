@@ -75,20 +75,16 @@ var Script;
             this.addEventListener("nodeDeserialized" /* ƒ.EVENT.NODE_DESERIALIZED */, this.hndEvent);
         }
         async move(_direction) {
-            const posTarget = ƒ.Vector3.SUM(this.node.mtxLocal.translation, ƒ.Vector3.Z(_direction == DIRECTION.FORWARD ? 1 : _direction == DIRECTION.BACK ? -1 : 0));
-            const rotTarget = ƒ.Vector3.SUM(this.node.mtxLocal.rotation, ƒ.Vector3.Y(90 * (_direction == DIRECTION.LEFT ? 1 : _direction == DIRECTION.RIGHT ? -1 : 0)));
+            const translation = _direction == DIRECTION.FORWARD ? 1 : _direction == DIRECTION.BACK ? -1 : 0;
+            const rotation = 90 * (_direction == DIRECTION.LEFT ? 1 : _direction == DIRECTION.RIGHT ? -1 : 0);
             let promise = new Promise((_resolve) => {
                 // let timer: ƒ.Timer = new ƒ.Timer()
                 const fps = 25; // framerate for the movement of the chassis in frames per second
                 const frames = this.timeToMove * fps; // number of frames for movement
-                const translation = ƒ.Vector3.DIFFERENCE(posTarget, this.node.mtxLocal.translation);
-                translation.scale(1 / frames);
-                const rotation = ƒ.Vector3.DIFFERENCE(rotTarget, this.node.mtxLocal.rotation);
-                rotation.scale(1 / frames);
                 const hndTimer = (_event) => {
                     console.log(_event.count);
-                    this.node.mtxLocal.translate(translation);
-                    this.node.mtxLocal.rotate(rotation);
+                    this.node.mtxLocal.translateZ(translation / frames);
+                    this.node.mtxLocal.rotateY(rotation / frames);
                     if (_event.lastCall)
                         _resolve();
                 };
@@ -111,13 +107,13 @@ var Script;
         let chassis = droid.getChildrenByName("Chassis")[0].getComponent(Script.Chassis);
         ƒ.Loop.addEventListener("loopFrame" /* ƒ.EVENT.LOOP_FRAME */, update);
         ƒ.Loop.start(); // start the game loop to continously draw the viewport, update the audiosystem and drive the physics i/a
+        await chassis.move(Script.DIRECTION.FORWARD);
         await chassis.move(Script.DIRECTION.LEFT);
+        await chassis.move(Script.DIRECTION.FORWARD);
         await chassis.move(Script.DIRECTION.LEFT);
+        await chassis.move(Script.DIRECTION.FORWARD);
         await chassis.move(Script.DIRECTION.LEFT);
-        await chassis.move(Script.DIRECTION.LEFT);
-        await chassis.move(Script.DIRECTION.LEFT);
-        await chassis.move(Script.DIRECTION.LEFT);
-        await chassis.move(Script.DIRECTION.LEFT);
+        await chassis.move(Script.DIRECTION.FORWARD);
         await chassis.move(Script.DIRECTION.LEFT);
     }
     function update(_event) {
