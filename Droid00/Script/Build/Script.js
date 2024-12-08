@@ -49,20 +49,6 @@ var Script;
                         const right = timeElapsed * this.speedWheel * Chassis.directions.get(this.direction)[1];
                         this.#left.forEach(_wheel => _wheel.mtxLocal.rotateX(left));
                         this.#right.forEach(_wheel => _wheel.mtxLocal.rotateX(right));
-                        // switch (this.direction) {
-                        //   case DIRECTION.FORWARD:
-                        //     this.node.mtxLocal.translateZ(Chassis.speedDrive * timeElapsed)
-                        //     break;
-                        //   case DIRECTION.BACK:
-                        //     this.node.mtxLocal.translateZ(-Chassis.speedDrive * timeElapsed)
-                        //     break;
-                        //   case DIRECTION.LEFT:
-                        //     this.node.mtxLocal.rotateY(Chassis.speedTurn * timeElapsed)
-                        //     break;
-                        //   case DIRECTION.RIGHT:
-                        //     this.node.mtxLocal.rotateY(-Chassis.speedTurn * timeElapsed)
-                        //     break;
-                        // }
                         break;
                 }
             };
@@ -75,6 +61,7 @@ var Script;
             this.addEventListener("nodeDeserialized" /* ƒ.EVENT.NODE_DESERIALIZED */, this.hndEvent);
         }
         async move(_direction) {
+            this.direction = _direction;
             const translation = _direction == DIRECTION.FORWARD ? 1 : _direction == DIRECTION.BACK ? -1 : 0;
             const rotation = 90 * (_direction == DIRECTION.LEFT ? 1 : _direction == DIRECTION.RIGHT ? -1 : 0);
             let promise = new Promise((_resolve) => {
@@ -103,6 +90,11 @@ var Script;
     document.addEventListener("interactiveViewportStarted", start);
     async function start(_event) {
         viewport = _event.detail;
+        let cmpCamera = new ƒ.ComponentCamera();
+        cmpCamera.mtxPivot.translateZ(-5);
+        cmpCamera.mtxPivot.translateY(5);
+        cmpCamera.mtxPivot.lookAt(ƒ.Vector3.ZERO());
+        viewport.camera = cmpCamera;
         let droid = viewport.getBranch().getChildrenByName("Droid")[0];
         let chassis = droid.getChildrenByName("Chassis")[0].getComponent(Script.Chassis);
         ƒ.Loop.addEventListener("loopFrame" /* ƒ.EVENT.LOOP_FRAME */, update);
@@ -115,6 +107,7 @@ var Script;
         await chassis.move(Script.DIRECTION.LEFT);
         await chassis.move(Script.DIRECTION.FORWARD);
         await chassis.move(Script.DIRECTION.LEFT);
+        await chassis.move(Script.DIRECTION.STOP);
     }
     function update(_event) {
         // ƒ.Physics.simulate();  // if physics is included and used

@@ -32,6 +32,7 @@ namespace Script {
     }
 
     public async move(_direction: DIRECTION): Promise<void> {
+      this.direction = _direction
       const translation: number = _direction == DIRECTION.FORWARD ? 1 : _direction == DIRECTION.BACK ? -1 : 0
       const rotation: number = 90 *(_direction == DIRECTION.LEFT ? 1 : _direction == DIRECTION.RIGHT ? -1 : 0)
 
@@ -78,20 +79,6 @@ namespace Script {
           const right: number = timeElapsed * this.speedWheel * Chassis.directions.get(this.direction)[1]
           this.#left.forEach(_wheel => _wheel.mtxLocal.rotateX(left))
           this.#right.forEach(_wheel => _wheel.mtxLocal.rotateX(right))
-          // switch (this.direction) {
-          //   case DIRECTION.FORWARD:
-          //     this.node.mtxLocal.translateZ(Chassis.speedDrive * timeElapsed)
-          //     break;
-          //   case DIRECTION.BACK:
-          //     this.node.mtxLocal.translateZ(-Chassis.speedDrive * timeElapsed)
-          //     break;
-          //   case DIRECTION.LEFT:
-          //     this.node.mtxLocal.rotateY(Chassis.speedTurn * timeElapsed)
-          //     break;
-          //   case DIRECTION.RIGHT:
-          //     this.node.mtxLocal.rotateY(-Chassis.speedTurn * timeElapsed)
-          //     break;
-          // }
           break;
       }
     }
