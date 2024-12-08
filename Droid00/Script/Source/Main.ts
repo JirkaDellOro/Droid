@@ -1,6 +1,12 @@
 namespace Script {
   import ƒ = FudgeCore;
-  ƒ.Debug.info("Main Program Template running!");
+
+  export interface STATE {
+    [module: string]: { [property: string]: unknown }
+  }
+  export interface COMMAND {
+    module: string, method: string, data?: unknown
+  }
 
   let viewport: ƒ.Viewport;
   document.addEventListener("interactiveViewportStarted", <EventListener><unknown>start);
@@ -12,23 +18,26 @@ namespace Script {
     cmpCamera.mtxPivot.translateZ(-5)
     cmpCamera.mtxPivot.translateY(5)
     cmpCamera.mtxPivot.lookAt(ƒ.Vector3.ZERO())
-    viewport.camera = cmpCamera    
+    viewport.camera = cmpCamera
 
     let droid: ƒ.Node = viewport.getBranch().getChildrenByName("Droid")[0]
-    let chassis: Chassis = droid.getChildrenByName("Chassis")[0].getComponent(Chassis)
+    // let chassis: Chassis = droid.getChildrenByName("Chassis")[0].getComponent(Chassis)
 
+     const process = (): void => {
+      let command: COMMAND = getCommand({})
+      let component = droid.getChildrenByName(command.module)[0].getComponent(Reflect.get(Script, command.module));
+      let method: Function = Reflect.get(component, command.method).bind(component)
+      method(command.data).then(process)
+    }
+    process()
+    
     ƒ.Loop.addEventListener(ƒ.EVENT.LOOP_FRAME, update);
     ƒ.Loop.start();  // start the game loop to continously draw the viewport, update the audiosystem and drive the physics i/a
-  
-    await chassis.move(DIRECTION.FORWARD)
-    await chassis.move(DIRECTION.LEFT)
-    await chassis.move(DIRECTION.FORWARD)
-    await chassis.move(DIRECTION.LEFT)
-    await chassis.move(DIRECTION.FORWARD)
-    await chassis.move(DIRECTION.LEFT)
-    await chassis.move(DIRECTION.FORWARD)
-    await chassis.move(DIRECTION.LEFT)
-    await chassis.move(DIRECTION.STOP)
+  }
+
+  function getCommand(_state: STATE): COMMAND {
+    let command: COMMAND = { module: "Chassis", method: "move", data: "forward" }
+    return command
   }
 
   function update(_event: Event): void {

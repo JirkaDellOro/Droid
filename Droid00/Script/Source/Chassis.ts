@@ -3,7 +3,7 @@ namespace Script {
   ƒ.Project.registerScriptNamespace(Script);  // Register the namespace to FUDGE for serialization
 
   export enum DIRECTION {
-    STOP, FORWARD, BACK, LEFT, RIGHT
+    STOP = "stop", FORWARD = "forward", BACK = "back", LEFT = "left", RIGHT = "right"
   }
 
   export class Chassis extends ƒ.ComponentScript {
@@ -66,15 +66,17 @@ namespace Script {
           this.removeEventListener(ƒ.EVENT.COMPONENT_ADD, this.hndEvent);
           this.removeEventListener(ƒ.EVENT.COMPONENT_REMOVE, this.hndEvent);
           this.removeEventListener(ƒ.EVENT.NODE_DESERIALIZED, this.hndEvent);
-          ƒ.Loop.removeEventListener(ƒ.EVENT.LOOP_FRAME, this.hndEvent);
+          this.node.removeEventListener(ƒ.EVENT.RENDER_PREPARE, this.hndEvent);
           break;
         case ƒ.EVENT.NODE_DESERIALIZED:
           // if deserialized the node is now fully reconstructed and access to all its components and children is possible
-          ƒ.Loop.addEventListener(ƒ.EVENT.LOOP_FRAME, this.hndEvent);
+          this.node.addEventListener(ƒ.EVENT.RENDER_PREPARE, this.hndEvent);
           this.#left = this.node.getChildren().filter((_node: ƒ.Node) => _node.name.startsWith("WheelL"));
           this.#right = this.node.getChildren().filter((_node: ƒ.Node) => _node.name.startsWith("WheelR"));
           break;
-        case ƒ.EVENT.LOOP_FRAME:
+        case ƒ.EVENT.RENDER_PREPARE:
+          if (!this.direction)
+            return
           let timeElapsed: number = ƒ.Loop.timeFrameGame / 1000
           const left: number = timeElapsed * this.speedWheel * Chassis.directions.get(this.direction)[0]
           const right: number = timeElapsed * this.speedWheel * Chassis.directions.get(this.direction)[1]
