@@ -69,11 +69,13 @@ var Script;
                 const fps = 25; // framerate for the movement of the chassis in frames per second
                 const frames = this.timeToMove * fps; // number of frames for movement
                 const hndTimer = (_event) => {
-                    console.log(_event.count);
-                    this.node.mtxLocal.translateZ(translation / frames);
-                    this.node.mtxLocal.rotateY(rotation / frames);
-                    if (_event.lastCall)
+                    this.node.dispatchEvent(new CustomEvent("move", {
+                        bubbles: true, detail: { translation: translation / frames, rotation: rotation / frames }
+                    }));
+                    if (_event.lastCall) {
+                        this.node.dispatchEvent(new CustomEvent("consolidate", { bubbles: true, }));
                         _resolve();
+                    }
                 };
                 ƒ.Time.game.setTimer(1000 / fps, frames, hndTimer);
             });

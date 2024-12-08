@@ -34,21 +34,22 @@ namespace Script {
     public async move(_direction: DIRECTION): Promise<void> {
       this.direction = _direction
       const translation: number = _direction == DIRECTION.FORWARD ? 1 : _direction == DIRECTION.BACK ? -1 : 0
-      const rotation: number = 90 *(_direction == DIRECTION.LEFT ? 1 : _direction == DIRECTION.RIGHT ? -1 : 0)
+      const rotation: number = 90 * (_direction == DIRECTION.LEFT ? 1 : _direction == DIRECTION.RIGHT ? -1 : 0)
 
       let promise: Promise<void> = new Promise<void>((_resolve) => {
         // let timer: ƒ.Timer = new ƒ.Timer()
         const fps: number = 25; // framerate for the movement of the chassis in frames per second
         const frames = this.timeToMove * fps // number of frames for movement
-        
+
         const hndTimer = (_event: ƒ.EventTimer): void => {
-          console.log(_event.count)
+          this.node.dispatchEvent(new CustomEvent("move", {
+            bubbles: true, detail: { translation: translation / frames, rotation: rotation / frames }
+          }))
 
-          this.node.mtxLocal.translateZ(translation/frames)
-          this.node.mtxLocal.rotateY(rotation/frames)
-
-          if (_event.lastCall)
+          if (_event.lastCall) {
+            this.node.dispatchEvent(new CustomEvent("consolidate", { bubbles: true, }))
             _resolve()
+          }
         }
 
         ƒ.Time.game.setTimer(1000 / fps, frames, hndTimer)
