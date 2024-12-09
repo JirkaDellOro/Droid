@@ -1,3 +1,5 @@
+/// <reference path="Module.ts"/>
+
 namespace Script {
   import ƒ = FudgeCore;
   ƒ.Project.registerScriptNamespace(Script);  // Register the namespace to FUDGE for serialization
@@ -6,7 +8,7 @@ namespace Script {
     STOP = "stop", FORWARD = "forward", BACK = "back", LEFT = "left", RIGHT = "right"
   }
 
-  export class Chassis extends ƒ.ComponentScript {
+  export class Chassis extends Module {
     // Register the script as component for use in the editor via drag&drop
     public static readonly iSubclass: number = ƒ.Component.registerSubclass(Chassis)
     public static readonly directions: Map<DIRECTION, number[]> = new Map([
@@ -18,20 +20,7 @@ namespace Script {
     #left: ƒ.Node[] = []
     #right: ƒ.Node[] = []
 
-    constructor() {
-      super();
-
-      // Don't start when running in editor
-      if (ƒ.Project.mode == ƒ.MODE.EDITOR)
-        return;
-
-      this.#direction = DIRECTION.STOP
-      // Listen to this component being added to or removed from a node
-      this.addEventListener(ƒ.EVENT.COMPONENT_ADD, this.hndEvent);
-      this.addEventListener(ƒ.EVENT.COMPONENT_REMOVE, this.hndEvent);
-      this.addEventListener(ƒ.EVENT.NODE_DESERIALIZED, this.hndEvent);
-    }
-
+    
     public async move(_direction: DIRECTION): Promise<void> {
       this.#direction = _direction
       const translation: number = _direction == DIRECTION.FORWARD ? 1 : _direction == DIRECTION.BACK ? -1 : 0
@@ -59,21 +48,14 @@ namespace Script {
     }
 
     // Activate the functions of this component as response to events
-    public hndEvent = (_event: CustomEvent): void => {
+    protected hndEventUnbound(_event: CustomEvent): void {
+      super.hndEventUnbound(_event);
+
       switch (_event.type) {
         case ƒ.EVENT.COMPONENT_ADD:
-          break;
-        case ƒ.EVENT.COMPONENT_REMOVE:
-          this.removeEventListener(ƒ.EVENT.COMPONENT_ADD, this.hndEvent);
-          this.removeEventListener(ƒ.EVENT.COMPONENT_REMOVE, this.hndEvent);
-          this.removeEventListener(ƒ.EVENT.NODE_DESERIALIZED, this.hndEvent);
-          this.node.removeEventListener(ƒ.EVENT.RENDER_PREPARE, this.hndEvent);
-          this.node.removeEventListener(EVENT.REGISTER_MODULE, this.hndEvent, true);
+          this.getDescription()
           break;
         case ƒ.EVENT.NODE_DESERIALIZED:
-          // if deserialized the node is now fully reconstructed and access to all its components and children is possible
-          this.node.addEventListener(EVENT.REGISTER_MODULE, this.hndEvent, true);
-          this.node.dispatchEvent(new CustomEvent(EVENT.REGISTER_MODULE, { bubbles: true, detail: this }))
           this.#left = this.node.getChildren().filter((_node: ƒ.Node) => _node.name.startsWith("WheelL"));
           this.#right = this.node.getChildren().filter((_node: ƒ.Node) => _node.name.startsWith("WheelR"));
           break;
@@ -84,10 +66,6 @@ namespace Script {
           this.#left.forEach(_wheel => _wheel.mtxLocal.rotateX(left))
           this.#right.forEach(_wheel => _wheel.mtxLocal.rotateX(right))
           break;
-        case EVENT.REGISTER_MODULE:
-          this.node.addEventListener(ƒ.EVENT.RENDER_PREPARE, this.hndEvent);
-          _event.detail.dispatchEvent(new CustomEvent(EVENT.REGISTER_MODULE, { detail: this }))
-          break
       }
     }
 

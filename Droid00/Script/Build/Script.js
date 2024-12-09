@@ -3,6 +3,58 @@ var Script;
 (function (Script) {
     var ƒ = FudgeCore;
     ƒ.Project.registerScriptNamespace(Script); // Register the namespace to FUDGE for serialization
+    class Module extends ƒ.ComponentScript {
+        constructor() {
+            super();
+            this.hndEvent = this.hndEventUnbound.bind(this);
+            // Don't start when running in editor
+            if (ƒ.Project.mode == ƒ.MODE.EDITOR)
+                return;
+            this.addEventListener("componentAdd" /* ƒ.EVENT.COMPONENT_ADD */, this.hndEvent);
+            this.addEventListener("componentRemove" /* ƒ.EVENT.COMPONENT_REMOVE */, this.hndEvent);
+            this.addEventListener("nodeDeserialized" /* ƒ.EVENT.NODE_DESERIALIZED */, this.hndEvent);
+        }
+        getDescription() {
+            let prototype = Reflect.getPrototypeOf(this);
+            let keys = Reflect.ownKeys(prototype);
+            let methods = [];
+            for (let key of keys)
+                if (key == "constructor" || key == "hndEventUnbound")
+                    continue;
+                else
+                    methods.push(Reflect.get(this, key).toString().split("{")[0]);
+            return methods;
+        }
+        hndEventUnbound(_event) {
+            switch (_event.type) {
+                case "componentAdd" /* ƒ.EVENT.COMPONENT_ADD */:
+                    break;
+                case "componentRemove" /* ƒ.EVENT.COMPONENT_REMOVE */:
+                    this.removeEventListener("componentAdd" /* ƒ.EVENT.COMPONENT_ADD */, this.hndEvent);
+                    this.removeEventListener("componentRemove" /* ƒ.EVENT.COMPONENT_REMOVE */, this.hndEvent);
+                    this.removeEventListener("nodeDeserialized" /* ƒ.EVENT.NODE_DESERIALIZED */, this.hndEvent);
+                    this.node.removeEventListener("renderPrepare" /* ƒ.EVENT.RENDER_PREPARE */, this.hndEvent);
+                    this.node.removeEventListener(Script.EVENT.REGISTER_MODULE, this.hndEvent, true);
+                    break;
+                case "nodeDeserialized" /* ƒ.EVENT.NODE_DESERIALIZED */:
+                    // if deserialized the node is now fully reconstructed and access to all its components and children is possible
+                    this.node.addEventListener(Script.EVENT.REGISTER_MODULE, this.hndEvent, true);
+                    this.node.dispatchEvent(new CustomEvent(Script.EVENT.REGISTER_MODULE, { bubbles: true, detail: this }));
+                    break;
+                case Script.EVENT.REGISTER_MODULE:
+                    this.node.addEventListener("renderPrepare" /* ƒ.EVENT.RENDER_PREPARE */, this.hndEvent);
+                    _event.detail.dispatchEvent(new CustomEvent(Script.EVENT.REGISTER_MODULE, { detail: this }));
+                    break;
+            }
+        }
+    }
+    Script.Module = Module;
+})(Script || (Script = {}));
+/// <reference path="Module.ts"/>
+var Script;
+(function (Script) {
+    var ƒ = FudgeCore;
+    ƒ.Project.registerScriptNamespace(Script); // Register the namespace to FUDGE for serialization
     let DIRECTION;
     (function (DIRECTION) {
         DIRECTION["STOP"] = "stop";
@@ -11,7 +63,19 @@ var Script;
         DIRECTION["LEFT"] = "left";
         DIRECTION["RIGHT"] = "right";
     })(DIRECTION = Script.DIRECTION || (Script.DIRECTION = {}));
-    class Chassis extends ƒ.ComponentScript {
+    class Chassis extends Script.Module {
+        constructor() {
+            super(...arguments);
+            this.speedWheel = 360; // angle to turn wheels in one second
+            this.timeToMove = 1; // Seconds to perform a move to the next tile or a 90 degree turn
+            this.#direction = DIRECTION.STOP;
+            this.#left = [];
+            this.#right = [];
+            // protected reduceMutator(_mutator: ƒ.Mutator): void {
+            //   // delete properties that should not be mutated
+            //   // undefined properties and private fields (#) will not be included by default
+            // }
+        }
         // Register the script as component for use in the editor via drag&drop
         static { this.iSubclass = ƒ.Component.registerSubclass(Chassis); }
         static { this.directions = new Map([
@@ -20,54 +84,6 @@ var Script;
         #direction;
         #left;
         #right;
-        constructor() {
-            super();
-            this.speedWheel = 360; // angle to turn wheels in one second
-            this.timeToMove = 1; // Seconds to perform a move to the next tile or a 90 degree turn
-            this.#direction = DIRECTION.STOP;
-            this.#left = [];
-            this.#right = [];
-            // Activate the functions of this component as response to events
-            this.hndEvent = (_event) => {
-                switch (_event.type) {
-                    case "componentAdd" /* ƒ.EVENT.COMPONENT_ADD */:
-                        break;
-                    case "componentRemove" /* ƒ.EVENT.COMPONENT_REMOVE */:
-                        this.removeEventListener("componentAdd" /* ƒ.EVENT.COMPONENT_ADD */, this.hndEvent);
-                        this.removeEventListener("componentRemove" /* ƒ.EVENT.COMPONENT_REMOVE */, this.hndEvent);
-                        this.removeEventListener("nodeDeserialized" /* ƒ.EVENT.NODE_DESERIALIZED */, this.hndEvent);
-                        this.node.removeEventListener("renderPrepare" /* ƒ.EVENT.RENDER_PREPARE */, this.hndEvent);
-                        this.node.removeEventListener(Script.EVENT.REGISTER_MODULE, this.hndEvent, true);
-                        break;
-                    case "nodeDeserialized" /* ƒ.EVENT.NODE_DESERIALIZED */:
-                        // if deserialized the node is now fully reconstructed and access to all its components and children is possible
-                        this.node.addEventListener(Script.EVENT.REGISTER_MODULE, this.hndEvent, true);
-                        this.node.dispatchEvent(new CustomEvent(Script.EVENT.REGISTER_MODULE, { bubbles: true, detail: this }));
-                        this.#left = this.node.getChildren().filter((_node) => _node.name.startsWith("WheelL"));
-                        this.#right = this.node.getChildren().filter((_node) => _node.name.startsWith("WheelR"));
-                        break;
-                    case "renderPrepare" /* ƒ.EVENT.RENDER_PREPARE */:
-                        let timeElapsed = ƒ.Loop.timeFrameGame / 1000;
-                        const left = timeElapsed * this.speedWheel * Chassis.directions.get(this.#direction)[0];
-                        const right = timeElapsed * this.speedWheel * Chassis.directions.get(this.#direction)[1];
-                        this.#left.forEach(_wheel => _wheel.mtxLocal.rotateX(left));
-                        this.#right.forEach(_wheel => _wheel.mtxLocal.rotateX(right));
-                        break;
-                    case Script.EVENT.REGISTER_MODULE:
-                        this.node.addEventListener("renderPrepare" /* ƒ.EVENT.RENDER_PREPARE */, this.hndEvent);
-                        _event.detail.dispatchEvent(new CustomEvent(Script.EVENT.REGISTER_MODULE, { detail: this }));
-                        break;
-                }
-            };
-            // Don't start when running in editor
-            if (ƒ.Project.mode == ƒ.MODE.EDITOR)
-                return;
-            this.#direction = DIRECTION.STOP;
-            // Listen to this component being added to or removed from a node
-            this.addEventListener("componentAdd" /* ƒ.EVENT.COMPONENT_ADD */, this.hndEvent);
-            this.addEventListener("componentRemove" /* ƒ.EVENT.COMPONENT_REMOVE */, this.hndEvent);
-            this.addEventListener("nodeDeserialized" /* ƒ.EVENT.NODE_DESERIALIZED */, this.hndEvent);
-        }
         async move(_direction) {
             this.#direction = _direction;
             const translation = _direction == DIRECTION.FORWARD ? 1 : _direction == DIRECTION.BACK ? -1 : 0;
@@ -88,6 +104,26 @@ var Script;
                 ƒ.Time.game.setTimer(1000 / fps, frames, hndTimer);
             });
             await promise;
+        }
+        // Activate the functions of this component as response to events
+        hndEventUnbound(_event) {
+            super.hndEventUnbound(_event);
+            switch (_event.type) {
+                case "componentAdd" /* ƒ.EVENT.COMPONENT_ADD */:
+                    this.getDescription();
+                    break;
+                case "nodeDeserialized" /* ƒ.EVENT.NODE_DESERIALIZED */:
+                    this.#left = this.node.getChildren().filter((_node) => _node.name.startsWith("WheelL"));
+                    this.#right = this.node.getChildren().filter((_node) => _node.name.startsWith("WheelR"));
+                    break;
+                case "renderPrepare" /* ƒ.EVENT.RENDER_PREPARE */:
+                    let timeElapsed = ƒ.Loop.timeFrameGame / 1000;
+                    const left = timeElapsed * this.speedWheel * Chassis.directions.get(this.#direction)[0];
+                    const right = timeElapsed * this.speedWheel * Chassis.directions.get(this.#direction)[1];
+                    this.#left.forEach(_wheel => _wheel.mtxLocal.rotateX(left));
+                    this.#right.forEach(_wheel => _wheel.mtxLocal.rotateX(right));
+                    break;
+            }
         }
     }
     Script.Chassis = Chassis;
