@@ -1,17 +1,11 @@
 namespace Script {
   import ƒ = FudgeCore;
 
-  export interface STATE {
-    [module: string]: { [property: string]: unknown }
-  }
-  export interface COMMAND {
-    module: string, method: string, data?: unknown
-  }
-
   let viewport: ƒ.Viewport;
   document.addEventListener("interactiveViewportStarted", <EventListener><unknown>start);
 
-  let getCommand: Function = getCommandInternal
+  let getCommand: Function = getCommandInternal 
+  let droid: ƒ.Node
 
   async function getAgents(): Promise<void> {
     // let url: string = "../../../Agent.js"
@@ -34,10 +28,14 @@ namespace Script {
     cmpCamera.mtxPivot.lookAt(ƒ.Vector3.ZERO())
     viewport.camera = cmpCamera
 
-    let droid: ƒ.Node = viewport.getBranch().getChildrenByName("Droid")[0]
+    droid = viewport.getBranch().getChildrenByName("Droid")[0]
     // let chassis: Chassis = droid.getChildrenByName("Chassis")[0].getComponent(Chassis)
 
     const process = (): void => {
+      ƒ.Render.prepare(droid)
+      //viewport.draw()
+      //@ts-ignore
+      console.table(droid.getComponent(Droid).getState()["Chassis"])
       let command: COMMAND = getCommand({})
       let component = droid.getChildrenByName(command.module)[0].getComponent(Reflect.get(Script, command.module));
       let method: Function = Reflect.get(component, command.method).bind(component)

@@ -20,7 +20,14 @@ namespace Script {
     #left: ƒ.Node[] = []
     #right: ƒ.Node[] = []
 
-    
+    public getState(): object {
+      let state: object = {
+        position: this.node.mtxWorld.translation,
+        rotation: this.node.mtxWorld.rotation,
+      }
+      return state
+    }
+
     public async move(_direction: DIRECTION): Promise<void> {
       this.#direction = _direction
       const translation: number = _direction == DIRECTION.FORWARD ? 1 : _direction == DIRECTION.BACK ? -1 : 0

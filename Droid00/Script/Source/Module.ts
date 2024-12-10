@@ -2,7 +2,14 @@ namespace Script {
   import ƒ = FudgeCore;
   ƒ.Project.registerScriptNamespace(Script);  // Register the namespace to FUDGE for serialization
 
-  export class Module extends ƒ.ComponentScript {
+  export interface STATE {
+    [module: string]: Object
+  }
+  export interface COMMAND {
+    module: string, method: string, data?: unknown
+  }
+
+  export abstract class Module extends ƒ.ComponentScript {
     public hndEvent: ƒ.EventListenerUnified
 
     constructor() {
@@ -18,6 +25,7 @@ namespace Script {
       this.addEventListener(ƒ.EVENT.NODE_DESERIALIZED, this.hndEvent);
     }
 
+    public abstract getState(): object
 
     public getDescription(): string[] {
       let prototype = Reflect.getPrototypeOf(this)
@@ -33,7 +41,6 @@ namespace Script {
       return methods
     }
 
-    
     protected hndEventUnbound(_event: CustomEvent): void {
       switch (_event.type) {
         case ƒ.EVENT.COMPONENT_ADD:
@@ -43,17 +50,12 @@ namespace Script {
           this.removeEventListener(ƒ.EVENT.COMPONENT_REMOVE, this.hndEvent);
           this.removeEventListener(ƒ.EVENT.NODE_DESERIALIZED, this.hndEvent);
           this.node.removeEventListener(ƒ.EVENT.RENDER_PREPARE, this.hndEvent);
-          this.node.removeEventListener(EVENT.REGISTER_MODULE, this.hndEvent, true);
           break;
         case ƒ.EVENT.NODE_DESERIALIZED:
-          // if deserialized the node is now fully reconstructed and access to all its components and children is possible
-          this.node.addEventListener(EVENT.REGISTER_MODULE, this.hndEvent, true);
+          console.log("Module")
+          this.node.addEventListener(ƒ.EVENT.RENDER_PREPARE, this.hndEvent)
           this.node.dispatchEvent(new CustomEvent(EVENT.REGISTER_MODULE, { bubbles: true, detail: this }))
           break;
-        case EVENT.REGISTER_MODULE:
-          this.node.addEventListener(ƒ.EVENT.RENDER_PREPARE, this.hndEvent);
-          _event.detail.dispatchEvent(new CustomEvent(EVENT.REGISTER_MODULE, { detail: this }))
-          break
       }
     }
   }

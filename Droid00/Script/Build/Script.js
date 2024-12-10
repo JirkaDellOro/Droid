@@ -34,16 +34,11 @@ var Script;
                     this.removeEventListener("componentRemove" /* ƒ.EVENT.COMPONENT_REMOVE */, this.hndEvent);
                     this.removeEventListener("nodeDeserialized" /* ƒ.EVENT.NODE_DESERIALIZED */, this.hndEvent);
                     this.node.removeEventListener("renderPrepare" /* ƒ.EVENT.RENDER_PREPARE */, this.hndEvent);
-                    this.node.removeEventListener(Script.EVENT.REGISTER_MODULE, this.hndEvent, true);
                     break;
                 case "nodeDeserialized" /* ƒ.EVENT.NODE_DESERIALIZED */:
-                    // if deserialized the node is now fully reconstructed and access to all its components and children is possible
-                    this.node.addEventListener(Script.EVENT.REGISTER_MODULE, this.hndEvent, true);
-                    this.node.dispatchEvent(new CustomEvent(Script.EVENT.REGISTER_MODULE, { bubbles: true, detail: this }));
-                    break;
-                case Script.EVENT.REGISTER_MODULE:
+                    console.log("Module");
                     this.node.addEventListener("renderPrepare" /* ƒ.EVENT.RENDER_PREPARE */, this.hndEvent);
-                    _event.detail.dispatchEvent(new CustomEvent(Script.EVENT.REGISTER_MODULE, { detail: this }));
+                    this.node.dispatchEvent(new CustomEvent(Script.EVENT.REGISTER_MODULE, { bubbles: true, detail: this }));
                     break;
             }
         }
@@ -84,6 +79,13 @@ var Script;
         #direction;
         #left;
         #right;
+        getState() {
+            let state = {
+                position: this.node.mtxWorld.translation,
+                rotation: this.node.mtxWorld.rotation,
+            };
+            return state;
+        }
         async move(_direction) {
             this.#direction = _direction;
             const translation = _direction == DIRECTION.FORWARD ? 1 : _direction == DIRECTION.BACK ? -1 : 0;
@@ -141,14 +143,17 @@ var Script;
     class Droid extends ƒ.ComponentScript {
         // Register the script as component for use in the editor via drag&drop
         static { this.iSubclass = ƒ.Component.registerSubclass(Droid); }
+        #modules;
         constructor() {
             super();
+            this.#modules = [];
             // Activate the functions of this component as response to events
             this.hndEvent = (_event) => {
                 switch (_event.type) {
                     case "componentAdd" /* ƒ.EVENT.COMPONENT_ADD */:
                         this.node.addEventListener(EVENT.MOVE, this.hndEvent);
                         this.node.addEventListener(EVENT.CONSOLIDATE, this.hndEvent);
+                        this.node.addEventListener(EVENT.REGISTER_MODULE, this.hndEvent);
                         break;
                     case "componentRemove" /* ƒ.EVENT.COMPONENT_REMOVE */:
                         this.removeEventListener("componentAdd" /* ƒ.EVENT.COMPONENT_ADD */, this.hndEvent);
@@ -156,17 +161,23 @@ var Script;
                         this.removeEventListener("nodeDeserialized" /* ƒ.EVENT.NODE_DESERIALIZED */, this.hndEvent);
                         this.node.removeEventListener(EVENT.MOVE, this.hndEvent);
                         this.node.removeEventListener(EVENT.CONSOLIDATE, this.hndEvent);
+                        this.node.removeEventListener(EVENT.REGISTER_MODULE, this.hndEvent);
                         break;
                     case "nodeDeserialized" /* ƒ.EVENT.NODE_DESERIALIZED */:
+                        console.log("Droid");
                         // if deserialized the node is now fully reconstructed and access to all its components and children is possible
-                        this.node.broadcastEvent(new CustomEvent(EVENT.REGISTER_MODULE, { detail: this }));
+                        // this.node.broadcastEvent(new CustomEvent(EVENT.REGISTER_MODULE, { detail: this }))
                         break;
                     case EVENT.MOVE:
                         this.node.mtxLocal.translateZ(_event.detail.translation);
                         this.node.mtxLocal.rotateY(_event.detail.rotation);
                         break;
+                    case EVENT.CONSOLIDATE:
+                        this.node.mtxLocal.translation = this.node.mtxLocal.translation.map(_component => Math.round(_component));
+                        this.node.mtxLocal.rotation = this.node.mtxLocal.rotation.map(_component => Math.round(_component));
+                        break;
                     case EVENT.REGISTER_MODULE:
-                        console.log(_event.detail);
+                        this.#modules.push(_event.detail);
                         break;
                 }
             };
@@ -177,7 +188,12 @@ var Script;
             this.addEventListener("componentAdd" /* ƒ.EVENT.COMPONENT_ADD */, this.hndEvent);
             this.addEventListener("componentRemove" /* ƒ.EVENT.COMPONENT_REMOVE */, this.hndEvent);
             this.addEventListener("nodeDeserialized" /* ƒ.EVENT.NODE_DESERIALIZED */, this.hndEvent);
-            this.addEventListener(EVENT.REGISTER_MODULE, this.hndEvent);
+        }
+        getState() {
+            let state = {};
+            for (const module of this.#modules)
+                state[module.constructor.name] = module.getState();
+            return state;
         }
     }
     Script.Droid = Droid;
@@ -188,6 +204,7 @@ var Script;
     let viewport;
     document.addEventListener("interactiveViewportStarted", start);
     let getCommand = getCommandInternal;
+    let droid;
     async function getAgents() {
         // let url: string = "../../../Agent.js"
         let url = "https://jirkadelloro.github.io/Agent/Agent.js";
@@ -204,9 +221,13 @@ var Script;
         cmpCamera.mtxPivot.translateY(5);
         cmpCamera.mtxPivot.lookAt(ƒ.Vector3.ZERO());
         viewport.camera = cmpCamera;
-        let droid = viewport.getBranch().getChildrenByName("Droid")[0];
+        droid = viewport.getBranch().getChildrenByName("Droid")[0];
         // let chassis: Chassis = droid.getChildrenByName("Chassis")[0].getComponent(Chassis)
         const process = () => {
+            ƒ.Render.prepare(droid);
+            //viewport.draw()
+            //@ts-ignore
+            console.table(droid.getComponent(Script.Droid).getState()["Chassis"]);
             let command = getCommand({});
             let component = droid.getChildrenByName(command.module)[0].getComponent(Reflect.get(Script, command.module));
             let method = Reflect.get(component, command.method).bind(component);
