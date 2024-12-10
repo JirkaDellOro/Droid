@@ -1,4 +1,4 @@
-namespace Agent00 {
+export namespace Agent00 {
   interface STATE {
     [module: string]: Object
   }
