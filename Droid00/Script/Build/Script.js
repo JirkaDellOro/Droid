@@ -214,7 +214,7 @@ var Script;
         getCommand = Agent.get(0).getCommand;
     }
     async function start(_event) {
-        // await getAgents();
+        await getAgents();
         viewport = _event.detail;
         let cmpCamera = new ƒ.ComponentCamera();
         cmpCamera.mtxPivot.translateZ(-5);

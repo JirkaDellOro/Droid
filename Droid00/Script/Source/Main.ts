@@ -18,7 +18,7 @@ namespace Script {
   }
 
   async function start(_event: CustomEvent): Promise<void> {
-    // await getAgents();
+    await getAgents();
 
     viewport = _event.detail;
 
