@@ -227,8 +227,8 @@ var Script;
             ƒ.Render.prepare(droid);
             //viewport.draw()
             //@ts-ignore
-            console.table(droid.getComponent(Script.Droid).getState()["Chassis"]);
-            let command = getCommand({});
+            let state = droid.getComponent(Script.Droid).getState();
+            let command = getCommand(state);
             let component = droid.getChildrenByName(command.module)[0].getComponent(Reflect.get(Script, command.module));
             let method = Reflect.get(component, command.method).bind(component);
             method(command.data).then(process);
@@ -238,6 +238,8 @@ var Script;
         ƒ.Loop.start(); // start the game loop to continously draw the viewport, update the audiosystem and drive the physics i/a
     }
     function getCommandInternal(_state) {
+        for (const module in _state)
+            console.table(_state[module]);
         let data = Script.DIRECTION[ƒ.Random.default.getPropertyName(Script.DIRECTION)];
         let command = { module: "Chassis", method: "move", data: data };
         return command;

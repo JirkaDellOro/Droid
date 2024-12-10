@@ -4,7 +4,7 @@ namespace Script {
   let viewport: ƒ.Viewport;
   document.addEventListener("interactiveViewportStarted", <EventListener><unknown>start);
 
-  let getCommand: Function = getCommandInternal 
+  let getCommand: Function = getCommandInternal
   let droid: ƒ.Node
 
   async function getAgents(): Promise<void> {
@@ -35,8 +35,8 @@ namespace Script {
       ƒ.Render.prepare(droid)
       //viewport.draw()
       //@ts-ignore
-      console.table(droid.getComponent(Droid).getState()["Chassis"])
-      let command: COMMAND = getCommand({})
+      let state: object = droid.getComponent(Droid).getState()
+      let command: COMMAND = getCommand(state)
       let component = droid.getChildrenByName(command.module)[0].getComponent(Reflect.get(Script, command.module));
       let method: Function = Reflect.get(component, command.method).bind(component)
       method(command.data).then(process)
@@ -48,6 +48,8 @@ namespace Script {
   }
 
   function getCommandInternal(_state: STATE): COMMAND {
+    for (const module in _state)
+      console.table(_state[module])
     let data: string = DIRECTION[ƒ.Random.default.getPropertyName(DIRECTION)]
     let command: COMMAND = { module: "Chassis", method: "move", data: data }
     return command
