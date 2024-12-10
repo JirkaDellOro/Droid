@@ -1,7 +1,7 @@
 export var Agent00;
 (function (Agent00) {
     function getCommand(_state) {
-        let command = { module: "", method: "" };
+        let command = { module: "Chassis", method: "move", data: "forward" };
         return command;
     }
     Agent00.getCommand = getCommand;

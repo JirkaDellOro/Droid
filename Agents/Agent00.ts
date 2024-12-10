@@ -7,7 +7,7 @@ export namespace Agent00 {
   }
 
   export function getCommand(_state: STATE): COMMAND {
-    let command: COMMAND = {module: "", method: ""}
+    let command: COMMAND = {module: "Chassis", method: "move", data: "forward"}
     return command
   }
 }
