@@ -31,14 +31,14 @@
       "shader": "ShaderFlat",
       "coat": {
         "ƒ.CoatRemissive": {
+          "alphaClip": 0.01,
           "color": "[1, 1, 1, 1]",
           "diffuse": 1,
           "specular": 0.5,
           "intensity": 0.7,
           "metallic": 0
         }
-      },
-      "alphaClip": 0.01
+      }
     }
   },
   "Graph|2024-12-05T18:21:35.018Z|75645": {
@@ -49,17 +49,14 @@
         "ComponentLight": [
           {
             "ƒ.ComponentLight": {
+              "lightType": "LightAmbient",
               "pivot": {
                 "translation": "[0, 0, 0]",
                 "rotation": "[0, 0, 0]",
                 "scaling": "[1, 1, 1]"
               },
-              "light": {
-                "ƒ.LightAmbient": {
-                  "color": "[0.30980392156862746, 0.30980392156862746, 0.30980392156862746, 1]",
-                  "intensity": 1
-                }
-              },
+              "color": "[0.30980392156862746, 0.30980392156862746, 0.30980392156862746, 1]",
+              "intensity": 1,
               "Component": {
                 "active": true
               }
@@ -67,17 +64,14 @@
           },
           {
             "ƒ.ComponentLight": {
+              "lightType": "LightDirectional",
               "pivot": {
                 "translation": "[0, 0, 0]",
                 "rotation": "[60, 70, 0]",
                 "scaling": "[1, 1, 1]"
               },
-              "light": {
-                "ƒ.LightDirectional": {
-                  "color": "[1, 1, 1, 1]",
-                  "intensity": 1
-                }
-              },
+              "color": "[1, 1, 1, 1]",
+              "intensity": 1,
               "Component": {
                 "active": true
               }
