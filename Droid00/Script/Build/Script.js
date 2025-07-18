@@ -206,8 +206,8 @@ var Script;
     let getCommand = getCommandInternal;
     let droid;
     async function getAgents() {
-        // let url: string = "../../../Agent.js"
-        let url = "https://jirkadelloro.github.io/Agent/Agent.js";
+        let url = "../../../Agent.js";
+        // let url: string = "https://jirkadelloro.github.io/Agent/Agent.js"
         //@ts-ignore
         let Agent = (await import(url)).default;
         await Agent.createDialog(1, ["getCommand"]);

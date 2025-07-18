@@ -8,8 +8,8 @@ namespace Script {
   let droid: ƒ.Node
 
   async function getAgents(): Promise<void> {
-    // let url: string = "../../../Agent.js"
-    let url: string = "https://jirkadelloro.github.io/Agent/Agent.js"
+    let url: string = "../../../Agent.js"
+    // let url: string = "https://jirkadelloro.github.io/Agent/Agent.js"
     //@ts-ignore
     let Agent = (await import(url)).default;
 
