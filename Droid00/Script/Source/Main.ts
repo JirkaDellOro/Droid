@@ -4,17 +4,17 @@ namespace Script {
   let viewport: ƒ.Viewport;
   document.addEventListener("interactiveViewportStarted", <EventListener><unknown>start);
 
-  let getCommand: Function = getCommandInternal
-  let droid: ƒ.Node
+  let getCommand: (_state: State) => Command = getCommandInternal;
+  let droid: ƒ.Node;
 
   async function getAgents(): Promise<void> {
-    let url: string = "../../../Agent.js"
+    const url: string = "../../../Agent.js";
     // let url: string = "https://jirkadelloro.github.io/Agent/Agent.js"
-    //@ts-ignore
-    let Agent = (await import(url)).default;
+    //@ts-expect-error import requires specific module configuration in tsconfig that is incompatible with outfile
+    const agent: ƒ.General = (await import(url)).default;
 
-    await Agent.createDialog(1, ["getCommand"])
-    getCommand = Agent.get(0).getCommand
+    await agent.createDialog(1, ["getCommand"]);
+    getCommand = agent.get(0).getCommand;
   }
 
   async function start(_event: CustomEvent): Promise<void> {
@@ -22,26 +22,24 @@ namespace Script {
 
     viewport = _event.detail;
 
-    let cmpCamera: ƒ.ComponentCamera = new ƒ.ComponentCamera();
-    cmpCamera.mtxPivot.translateZ(-5)
-    cmpCamera.mtxPivot.translateY(5)
-    cmpCamera.mtxPivot.lookAt(ƒ.Vector3.ZERO())
-    viewport.camera = cmpCamera
+    const cmpCamera: ƒ.ComponentCamera = new ƒ.ComponentCamera();
+    cmpCamera.mtxPivot.translateZ(-5);
+    cmpCamera.mtxPivot.translateY(5);
+    cmpCamera.mtxPivot.lookAt(ƒ.Vector3.ZERO());
+    viewport.camera = cmpCamera;
 
-    droid = viewport.getBranch().getChildrenByName("Droid")[0]
+    droid = viewport.getBranch().getChildrenByName("Droid")[0];
     // let chassis: Chassis = droid.getChildrenByName("Chassis")[0].getComponent(Chassis)
 
     const process = (): void => {
-      ƒ.Render.prepare(droid)
-      //viewport.draw()
-      //@ts-ignore
-      let state: object = droid.getComponent(Droid).getState()
-      let command: Command = getCommand(state)
-      let component = droid.getChildrenByName(command.module)[0].getComponent(Reflect.get(Script, command.module));
-      let method: Function = Reflect.get(component, command.method).bind(component)
-      method(command.data).then(process)
-    }
-    process()
+      ƒ.Render.prepare(droid);
+      const state: State = droid.getComponent(Droid).getState();
+      const command: Command = getCommand(state);
+      const component: ƒ.Component = droid.getChildrenByName(command.module)[0].getComponent(Reflect.get(Script, command.module));
+      const method: (_data: unknown) => Promise<void> = Reflect.get(component, command.method).bind(component);
+      method(command.data).then(process);
+    };
+    process();
 
     ƒ.Loop.addEventListener(ƒ.EVENT.LOOP_FRAME, update);
     ƒ.Loop.start();  // start the game loop to continously draw the viewport, update the audiosystem and drive the physics i/a
@@ -49,13 +47,13 @@ namespace Script {
 
   function getCommandInternal(_state: State): Command {
     for (const module in _state)
-      console.table(_state[module])
-    let data: string = DIRECTION[ƒ.Random.default.getPropertyName(DIRECTION)]
-    let command: Command = { module: "Chassis", method: "move", data: data }
-    return command
+      console.table(_state[module]);
+    const data: string = DIRECTION[ƒ.Random.default.getPropertyName(DIRECTION)];
+    const command: Command = { module: "Chassis", method: "move", data: data };
+    return command;
   }
 
-  function update(_event: Event): void {
+  function update(): void {
     // ƒ.Physics.simulate();  // if physics is included and used
     viewport.draw();
     ƒ.AudioManager.default.update();

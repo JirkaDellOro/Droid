@@ -1,7 +1,7 @@
 declare namespace Script {
     import ƒ = FudgeCore;
     interface State {
-        [module: string]: Object;
+        [module: string]: object;
     }
     interface Command {
         module: string;
@@ -15,10 +15,10 @@ declare namespace Script {
     abstract class Module extends ƒ.ComponentScript {
         hndEvent: ƒ.EventListenerUnified;
         constructor();
-        abstract getState(): object;
         logDescription(): Promise<void>;
         protected getDescription(): Description[];
         protected hndEventUnbound(_event: CustomEvent): void;
+        abstract getState(): object;
     }
 }
 declare namespace Script {
@@ -36,9 +36,9 @@ declare namespace Script {
         speedWheel: number;
         timeToMove: number;
         getState(): object;
-        protected getDescription(): Description[];
         move(_direction: DIRECTION): Promise<void>;
         protected hndEventUnbound(_event: CustomEvent): void;
+        protected getDescription(): Description[];
     }
 }
 declare namespace Script {
@@ -52,7 +52,7 @@ declare namespace Script {
         #private;
         static readonly iSubclass: number;
         constructor();
-        getState(): object;
+        getState(): State;
         hndEvent: (_event: CustomEvent) => void;
     }
 }

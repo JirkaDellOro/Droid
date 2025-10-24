@@ -19,10 +19,10 @@ var Script;
             console.log("Description for module " + this.constructor.name, this.getDescription());
         }
         getDescription() {
-            let prototype = Reflect.getPrototypeOf(this);
-            let keys = Reflect.ownKeys(prototype);
-            let description = [];
-            for (let key of keys)
+            const prototype = Reflect.getPrototypeOf(this);
+            const keys = Reflect.ownKeys(prototype);
+            const description = [];
+            for (const key of keys)
                 if (["constructor", "hndEventUnbound", "getDescription", "getState"].indexOf(key) != -1)
                     continue;
                 else
@@ -84,22 +84,17 @@ var Script;
         #left;
         #right;
         getState() {
-            let state = {
+            const state = {
                 position: this.node.mtxWorld.translation,
                 rotation: this.node.mtxWorld.rotation,
             };
             return state;
         }
-        getDescription() {
-            let description = [];
-            description.push({ method: "move", data: "one of the following strings: forward, back, left, right, stop" });
-            return description;
-        }
         async move(_direction) {
             this.#direction = _direction;
             const translation = _direction == DIRECTION.FORWARD ? 1 : _direction == DIRECTION.BACK ? -1 : 0;
             const rotation = 90 * (_direction == DIRECTION.LEFT ? 1 : _direction == DIRECTION.RIGHT ? -1 : 0);
-            let promise = new Promise((_resolve) => {
+            const promise = new Promise((_resolve) => {
                 // let timer: ƒ.Timer = new ƒ.Timer()
                 const fps = 25; // framerate for the movement of the chassis in frames per second
                 const frames = this.timeToMove * fps; // number of frames for movement
@@ -127,13 +122,18 @@ var Script;
                     this.#right = this.node.getChildren().filter((_node) => _node.name.startsWith("WheelR"));
                     break;
                 case "renderPrepare" /* ƒ.EVENT.RENDER_PREPARE */:
-                    let timeElapsed = ƒ.Loop.timeFrameGame / 1000;
+                    const timeElapsed = ƒ.Loop.timeFrameGame / 1000;
                     const left = timeElapsed * this.speedWheel * Chassis.directions.get(this.#direction)[0];
                     const right = timeElapsed * this.speedWheel * Chassis.directions.get(this.#direction)[1];
                     this.#left.forEach(_wheel => _wheel.mtxLocal.rotateX(left));
                     this.#right.forEach(_wheel => _wheel.mtxLocal.rotateX(right));
                     break;
             }
+        }
+        getDescription() {
+            const description = [];
+            description.push({ method: "move", data: "one of the following strings: forward, back, left, right, stop" });
+            return description;
         }
     }
     Script.Chassis = Chassis;
@@ -198,7 +198,7 @@ var Script;
             this.addEventListener("nodeDeserialized" /* ƒ.EVENT.NODE_DESERIALIZED */, this.hndEvent);
         }
         getState() {
-            let state = {};
+            const state = {};
             for (const module of this.#modules)
                 state[module.constructor.name] = module.getState();
             return state;
@@ -214,17 +214,17 @@ var Script;
     let getCommand = getCommandInternal;
     let droid;
     async function getAgents() {
-        let url = "../../../Agent.js";
+        const url = "../../../Agent.js";
         // let url: string = "https://jirkadelloro.github.io/Agent/Agent.js"
-        //@ts-ignore
-        let Agent = (await import(url)).default;
-        await Agent.createDialog(1, ["getCommand"]);
-        getCommand = Agent.get(0).getCommand;
+        //@ts-expect-error import requires specific module configuration in tsconfig that is incompatible with outfile
+        const agent = (await import(url)).default;
+        await agent.createDialog(1, ["getCommand"]);
+        getCommand = agent.get(0).getCommand;
     }
     async function start(_event) {
         await getAgents();
         viewport = _event.detail;
-        let cmpCamera = new ƒ.ComponentCamera();
+        const cmpCamera = new ƒ.ComponentCamera();
         cmpCamera.mtxPivot.translateZ(-5);
         cmpCamera.mtxPivot.translateY(5);
         cmpCamera.mtxPivot.lookAt(ƒ.Vector3.ZERO());
@@ -233,12 +233,10 @@ var Script;
         // let chassis: Chassis = droid.getChildrenByName("Chassis")[0].getComponent(Chassis)
         const process = () => {
             ƒ.Render.prepare(droid);
-            //viewport.draw()
-            //@ts-ignore
-            let state = droid.getComponent(Script.Droid).getState();
-            let command = getCommand(state);
-            let component = droid.getChildrenByName(command.module)[0].getComponent(Reflect.get(Script, command.module));
-            let method = Reflect.get(component, command.method).bind(component);
+            const state = droid.getComponent(Script.Droid).getState();
+            const command = getCommand(state);
+            const component = droid.getChildrenByName(command.module)[0].getComponent(Reflect.get(Script, command.module));
+            const method = Reflect.get(component, command.method).bind(component);
             method(command.data).then(process);
         };
         process();
@@ -248,11 +246,11 @@ var Script;
     function getCommandInternal(_state) {
         for (const module in _state)
             console.table(_state[module]);
-        let data = Script.DIRECTION[ƒ.Random.default.getPropertyName(Script.DIRECTION)];
-        let command = { module: "Chassis", method: "move", data: data };
+        const data = Script.DIRECTION[ƒ.Random.default.getPropertyName(Script.DIRECTION)];
+        const command = { module: "Chassis", method: "move", data: data };
         return command;
     }
-    function update(_event) {
+    function update() {
         // ƒ.Physics.simulate();  // if physics is included and used
         viewport.draw();
         ƒ.AudioManager.default.update();

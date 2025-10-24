@@ -1,6 +1,6 @@
 export namespace Agent00 {
   interface STATE {
-    [module: string]: Object
+    [module: string]: object
   }
   interface COMMAND {
     module: string, method: string, data?: unknown
@@ -9,7 +9,7 @@ export namespace Agent00 {
   export function getCommand(_state: STATE): COMMAND {
     console.log(_state);
     // let command: COMMAND = {module: "Chassis", method: "move", data: "forward"}
-    let command: COMMAND = {module: "Chassis", method: "logDescription"};
+    const command: COMMAND = {module: "Chassis", method: "logDescription"};
     return command;
   }
 }
