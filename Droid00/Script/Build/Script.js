@@ -49,7 +49,7 @@ var Script;
     }
     Script.Module = Module;
 })(Script || (Script = {}));
-/// <reference path="Module.ts"/>
+// / <reference path="Module.ts"/>
 var Script;
 (function (Script) {
     var ƒ = FudgeCore;

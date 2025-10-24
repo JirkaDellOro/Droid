@@ -1,5 +1,3 @@
-/// <reference path="Module.ts"/>
-
 namespace Script {
   import ƒ = FudgeCore;
   ƒ.Project.registerScriptNamespace(Script);  // Register the namespace to FUDGE for serialization
