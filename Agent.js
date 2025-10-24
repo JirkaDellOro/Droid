@@ -61,11 +61,21 @@ export default class Agent {
      */
     static async createDialog(_agents, _functions, _labels = []) {
         const dialog = document.createElement("dialog");
-        dialog.innerHTML = "<h1>Import agents</h1>Select or type URL for each agent to load. Agents need to provide the following functions:";
+        dialog.innerHTML = "<h1>Import agents</h1>\
+        Select or type URL for each agent to load.\
+        Agents need to provide a function <b>getCommand</b>,<br>\
+        that expects information about the state of the droid and returns a command for the droid.\
+        The state is an associative array that you can examine,\
+        the command is an associative array with the following structure:";
+
         const list = document.createElement("ul");
-        for (let f of _functions)
+        for (let f of [
+            "module: string = the name of the module the command addresses",
+            "method: string = the method you want to activate on that module",
+            "data: string = the information to be passed to that method"])
             list.innerHTML += `<li>${f}</li>`;
         dialog.appendChild(list);
+        dialog.innerHTML += "Use the method <b>logDescription</b> to see detailed information on a module in the console.<br><br>";
         document.body.appendChild(dialog);
         dialog.showModal();
         for (let i = 0; i < _agents; i++) {
