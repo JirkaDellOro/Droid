@@ -2,11 +2,14 @@ namespace Script {
   import ƒ = FudgeCore;
   ƒ.Project.registerScriptNamespace(Script);  // Register the namespace to FUDGE for serialization
 
-  export interface STATE {
+  export interface State {
     [module: string]: Object
   }
-  export interface COMMAND {
+  export interface Command {
     module: string, method: string, data?: unknown
+  }
+  export interface Description {
+    method: string, data: string
   }
 
   export abstract class Module extends ƒ.ComponentScript {
@@ -27,18 +30,23 @@ namespace Script {
 
     public abstract getState(): object
 
-    public getDescription(): string[] {
+    public async logDescription(): Promise<void> {
+      await ƒ.Time.game.delay(3000);
+      console.log("Description for module " + this.constructor.name, this.getDescription());
+    }
+
+    protected getDescription(): Description[] {
       let prototype = Reflect.getPrototypeOf(this)
       let keys = Reflect.ownKeys(prototype)
-      let methods: string[] = []
+      let description: Description[] = []
 
       for (let key of keys)
-        if (key == "constructor" || key == "hndEventUnbound")
+        if (["constructor", "hndEventUnbound", "getDescription", "getState"].indexOf(<string>key) != -1)
           continue
         else
-          methods.push(Reflect.get(this, key).toString().split("{")[0])
+          description.push({method: Reflect.get(this, key).toString().split("{")[0], data:"unknown"});
 
-      return methods
+      return description;
     }
 
     protected hndEventUnbound(_event: CustomEvent): void {

@@ -14,16 +14,20 @@ var Script;
             this.addEventListener("componentRemove" /* ƒ.EVENT.COMPONENT_REMOVE */, this.hndEvent);
             this.addEventListener("nodeDeserialized" /* ƒ.EVENT.NODE_DESERIALIZED */, this.hndEvent);
         }
+        async logDescription() {
+            await ƒ.Time.game.delay(3000);
+            console.log("Description for module " + this.constructor.name, this.getDescription());
+        }
         getDescription() {
             let prototype = Reflect.getPrototypeOf(this);
             let keys = Reflect.ownKeys(prototype);
-            let methods = [];
+            let description = [];
             for (let key of keys)
-                if (key == "constructor" || key == "hndEventUnbound")
+                if (["constructor", "hndEventUnbound", "getDescription", "getState"].indexOf(key) != -1)
                     continue;
                 else
-                    methods.push(Reflect.get(this, key).toString().split("{")[0]);
-            return methods;
+                    description.push({ method: Reflect.get(this, key).toString().split("{")[0], data: "unknown" });
+            return description;
         }
         hndEventUnbound(_event) {
             switch (_event.type) {
@@ -86,6 +90,11 @@ var Script;
             };
             return state;
         }
+        getDescription() {
+            let description = [];
+            description.push({ method: "move", data: "one of the following strings: forward, back, left, right, stop" });
+            return description;
+        }
         async move(_direction) {
             this.#direction = _direction;
             const translation = _direction == DIRECTION.FORWARD ? 1 : _direction == DIRECTION.BACK ? -1 : 0;
@@ -112,7 +121,6 @@ var Script;
             super.hndEventUnbound(_event);
             switch (_event.type) {
                 case "componentAdd" /* ƒ.EVENT.COMPONENT_ADD */:
-                    this.getDescription();
                     break;
                 case "nodeDeserialized" /* ƒ.EVENT.NODE_DESERIALIZED */:
                     this.#left = this.node.getChildren().filter((_node) => _node.name.startsWith("WheelL"));

@@ -28,6 +28,12 @@ namespace Script {
       return state
     }
 
+    protected getDescription(): Description[] {
+      let description: Description[] = [];
+      description.push({method: "move", data:"one of the following strings: forward, back, left, right, stop"});
+      return description
+    }
+
     public async move(_direction: DIRECTION): Promise<void> {
       this.#direction = _direction
       const translation: number = _direction == DIRECTION.FORWARD ? 1 : _direction == DIRECTION.BACK ? -1 : 0
@@ -60,7 +66,6 @@ namespace Script {
 
       switch (_event.type) {
         case ƒ.EVENT.COMPONENT_ADD:
-          this.getDescription()
           break;
         case ƒ.EVENT.NODE_DESERIALIZED:
           this.#left = this.node.getChildren().filter((_node: ƒ.Node) => _node.name.startsWith("WheelL"));

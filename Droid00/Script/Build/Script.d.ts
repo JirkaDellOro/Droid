@@ -1,18 +1,23 @@
 declare namespace Script {
     import ƒ = FudgeCore;
-    interface STATE {
+    interface State {
         [module: string]: Object;
     }
-    interface COMMAND {
+    interface Command {
         module: string;
         method: string;
         data?: unknown;
+    }
+    interface Description {
+        method: string;
+        data: string;
     }
     abstract class Module extends ƒ.ComponentScript {
         hndEvent: ƒ.EventListenerUnified;
         constructor();
         abstract getState(): object;
-        getDescription(): string[];
+        logDescription(): Promise<void>;
+        protected getDescription(): Description[];
         protected hndEventUnbound(_event: CustomEvent): void;
     }
 }
@@ -31,6 +36,7 @@ declare namespace Script {
         speedWheel: number;
         timeToMove: number;
         getState(): object;
+        protected getDescription(): Description[];
         move(_direction: DIRECTION): Promise<void>;
         protected hndEventUnbound(_event: CustomEvent): void;
     }

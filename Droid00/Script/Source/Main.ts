@@ -36,7 +36,7 @@ namespace Script {
       //viewport.draw()
       //@ts-ignore
       let state: object = droid.getComponent(Droid).getState()
-      let command: COMMAND = getCommand(state)
+      let command: Command = getCommand(state)
       let component = droid.getChildrenByName(command.module)[0].getComponent(Reflect.get(Script, command.module));
       let method: Function = Reflect.get(component, command.method).bind(component)
       method(command.data).then(process)
@@ -47,11 +47,11 @@ namespace Script {
     ƒ.Loop.start();  // start the game loop to continously draw the viewport, update the audiosystem and drive the physics i/a
   }
 
-  function getCommandInternal(_state: STATE): COMMAND {
+  function getCommandInternal(_state: State): Command {
     for (const module in _state)
       console.table(_state[module])
     let data: string = DIRECTION[ƒ.Random.default.getPropertyName(DIRECTION)]
-    let command: COMMAND = { module: "Chassis", method: "move", data: data }
+    let command: Command = { module: "Chassis", method: "move", data: data }
     return command
   }
 
